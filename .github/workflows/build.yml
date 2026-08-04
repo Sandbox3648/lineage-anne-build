@@ -65,6 +65,7 @@ jobs:
 
       - name: Copy local manifests
         run: |
+          mkdir -p ~/android/lineage/.repo/local_manifests
           cp -r ${{ github.workspace }}/local_manifests/* ~/android/lineage/.repo/local_manifests/
 
       - name: Sync sources
