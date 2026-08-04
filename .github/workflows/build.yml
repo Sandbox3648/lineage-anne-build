@@ -3,10 +3,6 @@ name: Build LineageOS 20 for ANE-LX1
 on:
   workflow_dispatch:
     inputs:
-      clean_build:
-        description: 'Clean build (delete ccache)'
-        type: boolean
-        default: false
       variant:
         description: 'Build variant'
         type: choice
@@ -19,17 +15,24 @@ jobs:
   build:
     name: Build LineageOS 20
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 480
     env:
-      USE_CCACHE: 1
-      CCACHE_DIR: /home/runner/android/ccache
-      CCACHE_MAXSIZE: 50G
+      USE_CCACHE: 0
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /opt/hostedtoolcache
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/local/.ghcup
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /var/lib/apt/lists
+          sudo apt-get clean
+          df -h
 
       - name: Install dependencies (Ubuntu 24.04 with i386 support)
         run: |
@@ -47,11 +50,6 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions Builder"
           git config --global user.email "actions@github.com"
-
-      - name: Setup ccache
-        run: |
-          ccache -M 50G
-          ccache -z
 
       - name: Create directories
         run: |
@@ -71,6 +69,12 @@ jobs:
         run: |
           cd ~/android/lineage
           repo sync -j$(nproc) --force-sync --no-clone-bundle --no-tags --optimized-fetch
+          df -h ~
+
+      - name: Free disk after sync (keep working tree, drop git store)
+        run: |
+          rm -rf ~/android/lineage/.repo
+          df -h ~
 
       - name: Build LineageOS
         run: |
@@ -85,11 +89,3 @@ jobs:
           name: lineage-20-anne-${{ github.event.inputs.variant }}
           path: ~/android/lineage/out/target/product/anne/lineage-20-*-UNOFFICIAL-anne.zip
           retention-days: 7
-
-      - name: Upload ccache (for future builds)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ccache
-          path: /home/runner/android/ccache
-          retention-days: 30
