@@ -76,12 +76,29 @@ jobs:
           rm -rf ~/android/lineage/.repo
           df -h ~
 
+      - name: Create swap space (avoid runner OOM kill during soong analysis)
+        run: |
+          sudo fallocate -l 8G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          free -h
+          df -h ~
+
       - name: Build LineageOS
         run: |
           cd ~/android/lineage
           source build/envsetup.sh
           lunch lineage_anne-${{ github.event.inputs.variant }}
-          mka bacon -j$(nproc)
+          mka bacon -j$(nproc) || {
+            echo "=== BUILD FAILED ===";
+            free -h;
+            df -h;
+            exit 1;
+          }
+          echo "=== BUILD OK ==="
+          free -h
+          df -h ~
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
