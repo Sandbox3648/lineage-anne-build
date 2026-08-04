@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <!-- Device trees for Huawei ANE-LX1 (anne) / hi6250 -->
+  <project name="hisi-oss/android_device_huawei_anne" path="device/huawei/anne" remote="github" revision="lineage-19.1" />
+  <project name="hisi-oss/android_device_huawei_hi6250-9-common" path="device/huawei/hi6250-9-common" remote="github" revision="lineage-19.1" />
+
+  <!-- Kernel for hi6250 (Kirin 659) -->
+  <project name="Meticulus/android_kernel_huawei_hi6250" path="kernel/huawei/hi6250" remote="github" revision="lineage-19.1" />
+
+  <!-- Vendor blobs for hi6250 -->
+  <project name="Meticulus/android_vendor_huawei_hi6250" path="vendor/huawei/hi6250" remote="github" revision="lineage-19.1" />
+
+  <!-- MicroG apps -->
+  <project name="microg/android_packages_apps_GmsCore" path="packages/apps/GmsCore" remote="github" revision="lineage-19.1" />
+  <project name="microg/android_packages_apps_GsfProxy" path="packages/apps/GsfProxy" remote="github" revision="lineage-19.1" />
+  <project name="microg/android_packages_apps_FakeStore" path="packages/apps/FakeStore" remote="github" revision="lineage-19.1" />
+</manifest>

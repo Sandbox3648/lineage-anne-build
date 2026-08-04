@@ -1,0 +1,22 @@
+# Build artifacts
+*.zip
+*.img
+out/
+*.log
+
+# Ccache
+ccache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backup files
+rethink_backup/
+rethink_backup.tar.gz

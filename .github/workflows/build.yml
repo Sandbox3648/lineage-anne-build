@@ -1,0 +1,98 @@
+name: Build LineageOS 19.1 for ANE-LX1
+
+on:
+  workflow_dispatch:
+    inputs:
+      clean_build:
+        description: 'Clean build (delete ccache)'
+        type: boolean
+        default: false
+      variant:
+        description: 'Build variant'
+        type: choice
+        options:
+          - userdebug
+          - eng
+        default: userdebug
+
+jobs:
+  build:
+    name: Build LineageOS 19.1
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      USE_CCACHE: 1
+      CCACHE_DIR: /home/runner/android/ccache
+      CCACHE_MAXSIZE: 50G
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git python3 openjdk-11-jdk repo bc bison build-essential \
+            ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick \
+            lib32ncurses5-dev lib32readline-dev lib32z1-dev libelf-dev liblz4-tool \
+            libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils \
+            lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev
+
+      - name: Configure git
+        run: |
+          git config --global user.name "GitHub Actions Builder"
+          git config --global user.email "actions@github.com"
+
+      - name: Setup ccache
+        run: |
+          ccache -M 50G
+          ccache -z
+
+      - name: Create directories
+        run: |
+          mkdir -p ~/android/lineage
+          cd ~/android/lineage
+
+      - name: Initialize repo
+        run: |
+          cd ~/android/lineage
+          repo init -u https://github.com/LineageOS/android.git -b lineage-19.1 --depth=1
+
+      - name: Copy local manifests
+        run: |
+          cp -r ${{ github.workspace }}/local_manifests/* ~/android/lineage/.repo/local_manifests/
+
+      - name: Sync sources
+        run: |
+          cd ~/android/lineage
+          repo sync -j$(nproc) --force-sync --no-clone-bundle --no-tags --optimized-fetch
+
+      - name: Copy device trees and patches
+        run: |
+          cp -r ${{ github.workspace }}/device/huawei/anne ~/android/lineage/device/huawei/
+          cp -r ${{ github.workspace }}/packages/apps/* ~/android/lineage/packages/apps/
+
+      - name: Build LineageOS
+        run: |
+          cd ~/android/lineage
+          source build/envsetup.sh
+          lunch lineage_anne-${{ github.event.inputs.variant }}
+          mka bacon -j$(nproc)
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lineage-19.1-anne-${{ github.event.inputs.variant }}
+          path: ~/android/lineage/out/target/product/anne/lineage-19.1-*-UNOFFICIAL-anne.zip
+          retention-days: 7
+
+      - name: Upload ccache (for future builds)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccache
+          path: /home/runner/android/ccache
+          retention-days: 30
