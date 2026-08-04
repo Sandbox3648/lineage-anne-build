@@ -78,10 +78,12 @@ jobs:
 
       - name: Create swap space (avoid runner OOM kill during soong analysis)
         run: |
-          sudo fallocate -l 8G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
+          if ! swapon --show | grep -q .; then
+            sudo dd if=/dev/zero of=/home/runner/swapfile0 bs=1M count=8192 status=none
+            sudo chmod 600 /home/runner/swapfile0
+            sudo mkswap /home/runner/swapfile0 >/dev/null
+            sudo swapon /home/runner/swapfile0
+          fi
           free -h
           df -h ~
 
